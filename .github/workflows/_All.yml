@@ -1,4 +1,4 @@
-name: Crawl All Dealers (Manual Only)
+name: _All Dealers (Manual Only)
 
 on:
   workflow_dispatch:
