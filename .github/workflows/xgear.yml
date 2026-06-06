@@ -1,8 +1,8 @@
-name: Xgear
+name: Crawl XGEAR Weekly
 
 on:
   schedule:
-    - cron: "0 0 * * 0"   # chạy mỗi Chủ Nhật
+    - cron: "0 0 * * 0"
   workflow_dispatch:
 
 jobs:
@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -30,4 +32,4 @@ jobs:
         git config --global user.email "github-actions@github.com"
         git add output/xgear.csv
         git commit -m "Weekly XGEAR update" || echo "No changes"
-        git push
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
