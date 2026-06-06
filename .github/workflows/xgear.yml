@@ -1,4 +1,4 @@
-name: Crawl XGEAR Weekly
+name: Xgear
 
 on:
   schedule:
