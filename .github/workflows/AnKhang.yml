@@ -1,0 +1,43 @@
+name: An Khang
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+jobs:
+  ankhang:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        pip install requests
+        pip install beautifulsoup4
+        pip install pandas
+
+    - name: Run AnKhang crawler
+      run: python ankhang.py
+
+    - name: Commit results
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+
+        git fetch origin main
+        git reset --soft origin/main
+
+        git add output/ankhang.csv
+        git commit -m "Update AnKhang" || echo "No changes"
+
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
