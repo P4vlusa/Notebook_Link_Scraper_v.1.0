@@ -33,7 +33,7 @@ jobs:
         sudo apt-get install -y google-chrome-stable
 
     - name: Run LaptopWorld crawler
-      run: python Laptopworld.py
+      run: python laptopworld.py
 
     - name: Commit results
       run: |
