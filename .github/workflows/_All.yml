@@ -4,10 +4,11 @@ on:
   workflow_dispatch:
 
 jobs:
+
   xgear:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -17,13 +18,13 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install deps
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
       - name: Run XGEAR crawler
         run: python xgear.py
 
-      - name: Commit XGEAR
+      - name: Commit XGEAR results
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
@@ -33,10 +34,11 @@ jobs:
           git commit -m "Update XGEAR" || echo "No changes"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
 
+
   gearvn:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -46,16 +48,19 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           pip install selenium webdriver-manager beautifulsoup4 pandas
+
+      - name: Install Chrome
+        run: |
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
       - name: Run GearVN crawler
         run: python gearvn.py
 
-      - name: Commit GearVN
+      - name: Commit GearVN results
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
@@ -65,10 +70,308 @@ jobs:
           git commit -m "Update GearVN" || echo "No changes"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
 
-  # … lặp lại tương tự cho các job khác (laptopworld, phongvu, fpt, cellphones,
-  # ankhang, anphat, phucanh, laptop88, tgdd) với cấu trúc:
-  # - Checkout
-  # - Setup Python
-  # - Install deps
-  # - Run crawler
-  # - Commit CSV
+
+  laptopworld:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager beautifulsoup4 pandas
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run LaptopWorld crawler
+        run: python Laptopworld.py
+
+      - name: Commit LaptopWorld results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/laptopworld.csv
+          git commit -m "Update LaptopWorld" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
+
+  phongvu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager beautifulsoup4 pandas
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run PhongVu crawler
+        run: python phongvu.py
+
+      - name: Commit PhongVu results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/phongvu.csv
+          git commit -m "Update PhongVu" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
+
+  fpt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager beautifulsoup4 pandas
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run FPT crawler
+        run: python fpt.py
+
+      - name: Commit FPT results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/fpt.csv
+          git commit -m "Update FPTShop" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
+
+  cellphones:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager beautifulsoup4 pandas
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run CellphoneS crawler
+        run: python cellphones.py
+
+      - name: Commit CellphoneS results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/cellphones.csv
+          git commit -m "Update CellphoneS" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
+
+  ankhang:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 pandas
+
+      - name: Run AnKhang crawler
+        run: python ankhang.py
+
+      - name: Commit AnKhang results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/ankhang.csv
+          git commit -m "Update AnKhang" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
+
+  anphat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager beautifulsoup4 pandas
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run AnPhat crawler
+        run: python anphat.py
+
+      - name: Commit AnPhat results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/anphat.csv
+          git commit -m "Update AnPhat" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
+
+  phucanh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 pandas
+
+      - name: Run PhucAnh crawler
+        run: python phucanh.py
+
+      - name: Commit PhucAnh results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/phucanh.csv
+          git commit -m "Update PhucAnh" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
+
+  laptop88:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 pandas
+
+      - name: Run Laptop88 crawler
+        run: python laptop88.py
+
+      - name: Commit Laptop88 results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/laptop88.csv
+          git commit -m "Update Laptop88" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
+
+  tgdd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager beautifulsoup4 pandas
+
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run TGDD crawler
+        run: python tgdd.py
+
+      - name: Commit TGDD results
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git fetch origin main
+          git reset --soft origin/main
+          git add output/tgdd.csv
+          git commit -m "Update TGDD" || echo "No changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
