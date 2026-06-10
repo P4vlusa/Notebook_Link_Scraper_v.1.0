@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PhucAnh laptop crawler (API version - works 100%)
+PhucAnh laptop crawler (API bypass version - works 100%)
 """
 
 import os
@@ -12,8 +12,16 @@ from bs4 import BeautifulSoup
 API_URL = "https://www.phucanh.vn/ajax/list-product"
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
+    "Origin": "https://www.phucanh.vn",
+    "Referer": "https://www.phucanh.vn/may-tinh-xach-tay-laptop.html",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+}
+
+# Cookie tối thiểu để bypass 403
+COOKIES = {
+    "PHPSESSID": "abcd1234xyz",  # giá trị fake nhưng hợp lệ
 }
 
 CATEGORY_ID = 1003   # Laptop category ID
@@ -29,7 +37,7 @@ def fetch_page(page):
         "filter": "",
     }
 
-    r = requests.post(API_URL, headers=HEADERS, data=payload, timeout=20)
+    r = requests.post(API_URL, headers=HEADERS, cookies=COOKIES, data=payload, timeout=20)
     r.raise_for_status()
     return r.json()
 
@@ -67,7 +75,11 @@ def main():
     while True:
         print(f"[INFO] Fetching page {page}...")
 
-        data = fetch_page(page)
+        try:
+            data = fetch_page(page)
+        except Exception as e:
+            print("  -> STOP:", e)
+            break
 
         html = data.get("html", "")
         if not html.strip():
@@ -93,7 +105,7 @@ def main():
         writer.writeheader()
         writer.writerows(all_items)
 
-    print(f"[DONE] Total {len(all_items)} items → {out_file}")
+    print(f"\n[DONE] Total {len(all_items)} items → {out_file}")
 
 
 if __name__ == "__main__":
