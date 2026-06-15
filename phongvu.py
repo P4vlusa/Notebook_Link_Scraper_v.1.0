@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-PhongVu laptop crawler (stable 2025 version)
+Thu thập toàn bộ tên + link laptop từ Phong Vũ
+URL: https://phongvu.vn/c/laptop
+Xuất CSV: Tên, link
 """
 
 import os
@@ -10,7 +12,6 @@ from urllib.parse import urljoin
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
@@ -46,7 +47,7 @@ def extract_products(driver):
     soup = BeautifulSoup(driver.page_source, "html.parser")
     items = []
 
-    # Layout mới của Phong Vũ
+    # Layout mới của Phong Vũ: mỗi sản phẩm nằm trong div[data-cy='product-card']
     for box in soup.select("div[data-cy='product-card']"):
         a = box.select_one("a[href]")
         name_tag = box.select_one("h3[role='heading']")
@@ -63,8 +64,8 @@ def extract_products(driver):
         full = urljoin("https://phongvu.vn", href)
 
         items.append({
-            "name": name,
-            "url": full
+            "Tên": name,
+            "link": full
         })
 
     return items
@@ -84,14 +85,10 @@ def main():
 
     df = pd.DataFrame(items)
 
-    # Chỉ lọc nếu có cột name
-    if "name" in df.columns:
-        df = df[df["name"].str.len() > 10]
-
     os.makedirs("output", exist_ok=True)
     df.to_csv("output/phongvu.csv", index=False, encoding="utf-8-sig")
 
-    print(f"[DONE] Saved {len(df)} products to output/phongvu.csv")
+    print(f"[DONE] Thu thập {len(df)} sản phẩm → output/phongvu.csv")
 
 
 if __name__ == "__main__":
