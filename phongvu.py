@@ -46,7 +46,7 @@ def extract_products(driver):
     soup = BeautifulSoup(driver.page_source, "html.parser")
     items = []
 
-    # Tên sản phẩm nằm trong thẻ h3 có role="heading"
+    # Layout mới của Phong Vũ
     for box in soup.select("div[data-cy='product-card']"):
         a = box.select_one("a[href]")
         name_tag = box.select_one("h3[role='heading']")
