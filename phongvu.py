@@ -1,91 +1,66 @@
 # -*- coding: utf-8 -*-
 """
-Thu thập toàn bộ tên + link laptop từ Phong Vũ
+Thu thập toàn bộ tên + link laptop từ Phong Vũ (API chính thức)
 URL: https://phongvu.vn/c/laptop
-Xuất CSV: Tên, link
+API: https://api-phongvu.vn/v1/products
 """
 
-import os
-import time
+import requests
 import pandas as pd
-from urllib.parse import urljoin
+import os
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup
+API = "https://api-phongvu.vn/v1/products"
 
-
-URL = "https://phongvu.vn/c/laptop"
-
-
-def make_driver():
-    opts = Options()
-    opts.add_argument("--headless=new")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-gpu")
-    opts.add_argument("--disable-dev-shm-usage")
-    opts.add_argument("--window-size=1400,6000")
-    opts.add_argument("--user-agent=Mozilla/5.0")
-    return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=opts)
+HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    "Origin": "https://phongvu.vn",
+    "Referer": "https://phongvu.vn/c/laptop",
+}
 
 
-def scroll_all(driver):
-    """Scroll toàn trang để load hết sản phẩm."""
-    last_height = 0
-    while True:
-        driver.execute_script("window.scrollBy(0, 2000);")
-        time.sleep(1.2)
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
+def fetch_page(page):
+    params = {
+        "category": "laptop",
+        "page": page,
+        "size": 48,
+    }
 
-
-def extract_products(driver):
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    items = []
-
-    # Layout mới của Phong Vũ: mỗi sản phẩm nằm trong div[data-cy='product-card']
-    for box in soup.select("div[data-cy='product-card']"):
-        a = box.select_one("a[href]")
-        name_tag = box.select_one("h3[role='heading']")
-
-        if not a or not name_tag:
-            continue
-
-        name = name_tag.get_text(strip=True)
-        href = a.get("href")
-
-        if not name or not href:
-            continue
-
-        full = urljoin("https://phongvu.vn", href)
-
-        items.append({
-            "Tên": name,
-            "link": full
-        })
-
-    return items
+    r = requests.get(API, headers=HEADERS, params=params, timeout=20)
+    r.raise_for_status()
+    return r.json()
 
 
 def main():
-    print("[INFO] Crawling PhongVu...")
+    all_items = []
+    page = 1
 
-    driver = make_driver()
-    driver.get(URL)
-    time.sleep(2)
+    while True:
+        print(f"[INFO] Fetching page {page}...")
 
-    scroll_all(driver)
+        data = fetch_page(page)
+        products = data.get("data", {}).get("products", [])
 
-    items = extract_products(driver)
-    driver.quit()
+        if not products:
+            break
 
-    df = pd.DataFrame(items)
+        for p in products:
+            name = p.get("name")
+            slug = p.get("slug")
+
+            if not name or not slug:
+                continue
+
+            link = f"https://phongvu.vn/{slug}"
+
+            all_items.append({
+                "Tên": name,
+                "link": link
+            })
+
+        page += 1
 
     os.makedirs("output", exist_ok=True)
+    df = pd.DataFrame(all_items)
     df.to_csv("output/phongvu.csv", index=False, encoding="utf-8-sig")
 
     print(f"[DONE] Thu thập {len(df)} sản phẩm → output/phongvu.csv")
