@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-PhongVu laptop crawler (GitHub-compatible)
-- Infinite scroll + click "Xem thêm"
-- Extract product name + URL
-- Save to output/phongvu.csv
+PhongVu laptop crawler (stable 2025 version)
 """
 
-import time
 import os
+import time
 import pandas as pd
 from urllib.parse import urljoin
 
@@ -20,8 +17,6 @@ from bs4 import BeautifulSoup
 
 
 URL = "https://phongvu.vn/c/laptop"
-MAX_SCROLL = 80
-SCROLL_PAUSE = 1.5
 
 
 def make_driver():
@@ -30,82 +25,68 @@ def make_driver():
     opts.add_argument("--no-sandbox")
     opts.add_argument("--disable-gpu")
     opts.add_argument("--disable-dev-shm-usage")
-    opts.add_argument("--window-size=1400,5000")
-    opts.add_argument("--user-agent=Mozilla/5.0 (compatible; pv-collector/1.0)")
+    opts.add_argument("--window-size=1400,6000")
+    opts.add_argument("--user-agent=Mozilla/5.0")
     return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=opts)
 
 
-def scroll_and_expand(driver):
-    """Scroll + click 'Xem thêm' until no more content loads."""
-    last_height = driver.execute_script("return document.body.scrollHeight")
-    stuck = 0
-
-    for _ in range(MAX_SCROLL):
-        driver.execute_script("window.scrollBy(0, 1200);")
-        time.sleep(SCROLL_PAUSE)
-
-        # Click "Xem thêm"
-        try:
-            buttons = driver.find_elements(By.XPATH, "//*[contains(text(), 'Xem thêm')]")
-            for b in buttons:
-                if b.is_displayed():
-                    driver.execute_script("arguments[0].click();", b)
-                    time.sleep(2)
-        except:
-            pass
-
+def scroll_all(driver):
+    """Scroll toàn trang để load hết sản phẩm."""
+    last_height = 0
+    while True:
+        driver.execute_script("window.scrollBy(0, 2000);")
+        time.sleep(1.2)
         new_height = driver.execute_script("return document.body.scrollHeight")
-        stuck = stuck + 1 if new_height == last_height else 0
+        if new_height == last_height:
+            break
         last_height = new_height
 
-        if stuck >= 4:
-            break
 
-
-def extract_links(driver):
-    driver.get(URL)
-    time.sleep(3)
-
-    scroll_and_expand(driver)
-
+def extract_products(driver):
     soup = BeautifulSoup(driver.page_source, "html.parser")
     items = []
 
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        name = a.get_text(" ", strip=True)
+    # Tên sản phẩm nằm trong thẻ h3 có role="heading"
+    for box in soup.select("div[data-cy='product-card']"):
+        a = box.select_one("a[href]")
+        name_tag = box.select_one("h3[role='heading']")
 
-        if not href or not name:
+        if not a or not name_tag:
             continue
 
-        # Filter product links
-        if "-" in href and "/c/" not in href and len(name) > 20:
-            if any(bad in href for bad in ["tin-tuc", "hoi-dap", "khuyen-mai", "build-pc"]):
-                continue
+        name = name_tag.get_text(strip=True)
+        href = a.get("href")
 
-            full = href if href.startswith("http") else "https://phongvu.vn" + href
+        if not name or not href:
+            continue
 
-            items.append({
-                "name": name,
-                "url": full
-            })
+        full = urljoin("https://phongvu.vn", href)
+
+        items.append({
+            "name": name,
+            "url": full
+        })
 
     return items
 
 
 def main():
+    print("[INFO] Crawling PhongVu...")
+
     driver = make_driver()
-    final = []
+    driver.get(URL)
+    time.sleep(2)
 
-    try:
-        print("[INFO] Crawling PhongVu...")
-        final = extract_links(driver)
-    finally:
-        driver.quit()
+    scroll_all(driver)
 
-    df = pd.DataFrame(final)
-    df = df.drop_duplicates(subset=["url"])
-    df = df[df["name"].str.len() > 15]
+    items = extract_products(driver)
+    driver.quit()
+
+    df = pd.DataFrame(items)
+
+    # Chỉ lọc nếu có cột name
+    if "name" in df.columns:
+        df = df[df["name"].str.len() > 10]
 
     os.makedirs("output", exist_ok=True)
     df.to_csv("output/phongvu.csv", index=False, encoding="utf-8-sig")
