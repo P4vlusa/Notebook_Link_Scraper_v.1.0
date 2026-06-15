@@ -25,6 +25,8 @@ jobs:
         pip install requests
         pip install beautifulsoup4
         pip install pandas
+        pip install selenium
+        pip install webdriver-manager
 
     - name: Run PhucAnh crawler
       run: python phucanh.py
