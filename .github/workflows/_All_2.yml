@@ -41,7 +41,7 @@ jobs:
         run: python -m playwright install chromium --with-deps
 
       - name: Run AnKhang crawler
-        run: python ankhang.py
+        run: python vietnam_laptop_crawler.py
       
       - name: Commit results
         run: |
@@ -51,8 +51,8 @@ jobs:
           git fetch origin main
           git reset --soft origin/main
 
-          git add output/ankhang.csv
-          git commit -m "Update AnKhang" || echo "No changes"
+          git add output/all_v2.csv
+          git commit -m "Update vietnam_laptop_crawler" || echo "No changes"
 
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
 
