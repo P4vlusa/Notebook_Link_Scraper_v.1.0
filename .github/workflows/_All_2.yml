@@ -1,4 +1,4 @@
-name: _ALL Laptop Crawler
+name: ALL Laptop Crawler
 
 on:
   # Chạy tự động mỗi sáng thứ 5 lúc 02:00 UTC (09:00 giờ Việt Nam)
