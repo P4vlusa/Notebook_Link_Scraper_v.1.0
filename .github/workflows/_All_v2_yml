@@ -1,0 +1,102 @@
+name: _ALL Laptop Crawler
+
+on:
+  # Chạy tự động mỗi sáng thứ 5 lúc 02:00 UTC (09:00 giờ Việt Nam)
+  schedule:
+    - cron: '0 2 * * 4'
+
+  # Cho phép chạy thủ công từ GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      sites:
+        description: 'Sites to crawl (space-separated, leave empty for all)'
+        required: false
+        default: ''
+      delay:
+        description: 'Delay between requests (seconds)'
+        required: false
+        default: '1.5'
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # Tối đa 3 giờ
+
+    steps:
+      # ── 1. Checkout repo ──────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Setup Python ───────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ── 3. Install dependencies ───────────────────────────────────────────
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install requests beautifulsoup4 lxml playwright
+
+      # ── 4. Install Playwright browsers ────────────────────────────────────
+      - name: Install Playwright Chromium
+        run: python -m playwright install chromium --with-deps
+
+      # ── 5. Run crawler ────────────────────────────────────────────────────
+      - name: Run laptop crawler
+        run: |
+          DELAY="${{ github.event.inputs.delay || '1.5' }}"
+          SITES="${{ github.event.inputs.sites }}"
+
+          if [ -n "$SITES" ]; then
+            echo "Running crawler for sites: $SITES"
+            python vietnam_laptop_crawler.py --sites $SITES --delay $DELAY --output vietnam_laptops.csv
+          else
+            echo "Running crawler for all sites"
+            python vietnam_laptop_crawler.py --delay $DELAY --output vietnam_laptops.csv
+          fi
+
+      # ── 6. Show summary ───────────────────────────────────────────────────
+      - name: Show result summary
+        if: always()
+        run: |
+          if [ -f vietnam_laptops.csv ]; then
+            LINES=$(wc -l < vietnam_laptops.csv)
+            COUNT=$((LINES - 1))
+            echo "✅ Crawl completed: $COUNT products collected"
+            echo "### 📊 Crawl Results" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total products | $COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| Run date | $(date '+%Y-%m-%d %H:%M UTC') |" >> $GITHUB_STEP_SUMMARY
+            echo "| File | vietnam_laptops.csv |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Sample data (first 5 rows):**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            head -6 vietnam_laptops.csv >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ No output file found"
+          fi
+
+      # ── 7. Upload CSV as artifact ─────────────────────────────────────────
+      - name: Upload CSV artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vietnam-laptops-${{ github.run_number }}-${{ github.run_attempt }}
+          path: vietnam_laptops.csv
+          retention-days: 30
+
+      # ── 8. Commit & push CSV to repo (optional) ───────────────────────────
+      # Bỏ comment block này nếu muốn lưu CSV vào repo
+       - name: Commit CSV to repository
+         if: success()
+         run: |
+           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+           git config --local user.name "github-actions[bot]"
+           git add vietnam_laptops.csv
+           git diff --staged --quiet || git commit -m "🤖 Auto-crawl: $(date '+%Y-%m-%d') - $(wc -l < vietnam_laptops.csv |
+
