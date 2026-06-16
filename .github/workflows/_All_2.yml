@@ -40,54 +40,19 @@ jobs:
       - name: Install Playwright Chromium
         run: python -m playwright install chromium --with-deps
 
-      - name: Run laptop crawler
+      - name: Run AnKhang crawler
+      run: python ankhang.py
+
+      - name: Commit results
         run: |
-          DELAY="${{ github.event.inputs.delay || '1.5' }}"
-          SITES="${{ github.event.inputs.sites }}"
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
 
-          if [ -n "$SITES" ]; then
-            echo "Running crawler for sites: $SITES"
-            python vietnam_laptop_crawler.py --sites $SITES --delay $DELAY --output vietnam_laptops.csv
-          else
-            echo "Running crawler for all sites"
-            python vietnam_laptop_crawler.py --delay $DELAY --output vietnam_laptops.csv
-          fi
+        git fetch origin main
+        git reset --soft origin/main
 
-      - name: Show result summary
-        if: always()
-        run: |
-          if [ -f vietnam_laptops.csv ]; then
-            LINES=$(wc -l < vietnam_laptops.csv)
-            COUNT=$((LINES - 1))
-            echo "✅ Crawl completed: $COUNT products collected"
-            echo "### 📊 Crawl Results" >> $GITHUB_STEP_SUMMARY
-            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
-            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Total products | $COUNT |" >> $GITHUB_STEP_SUMMARY
-            echo "| Run date | $(date '+%Y-%m-%d %H:%M UTC') |" >> $GITHUB_STEP_SUMMARY
-            echo "| File | vietnam_laptops.csv |" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Sample data (first 5 rows):**" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            head -6 vietnam_laptops.csv >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ No output file found"
-          fi
+        git add output/ankhang.csv
+        git commit -m "Update AnKhang" || echo "No changes"
 
-      - name: Upload CSV artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: vietnam-laptops-${{ github.run_number }}-${{ github.run_attempt }}
-          path: vietnam_laptops.csv
-          retention-days: 30
-
-       - name: Commit CSV to repository
-         if: success()
-         run: |
-           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-           git config --local user.name "github-actions[bot]"
-           git add vietnam_laptops.csv
-           git diff --staged --quiet || git commit -m "🤖 Auto-crawl: $(date '+%Y-%m-%d') - $(wc -l < vietnam_laptops.csv |
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
 
