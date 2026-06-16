@@ -23,28 +23,23 @@ jobs:
     timeout-minutes: 180  # Tối đa 3 giờ
 
     steps:
-      # ── 1. Checkout repo ──────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Setup Python ───────────────────────────────────────────────────
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      # ── 3. Install dependencies ───────────────────────────────────────────
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
           pip install requests beautifulsoup4 lxml playwright
 
-      # ── 4. Install Playwright browsers ────────────────────────────────────
       - name: Install Playwright Chromium
         run: python -m playwright install chromium --with-deps
 
-      # ── 5. Run crawler ────────────────────────────────────────────────────
       - name: Run laptop crawler
         run: |
           DELAY="${{ github.event.inputs.delay || '1.5' }}"
@@ -58,7 +53,6 @@ jobs:
             python vietnam_laptop_crawler.py --delay $DELAY --output vietnam_laptops.csv
           fi
 
-      # ── 6. Show summary ───────────────────────────────────────────────────
       - name: Show result summary
         if: always()
         run: |
@@ -81,7 +75,6 @@ jobs:
             echo "❌ No output file found"
           fi
 
-      # ── 7. Upload CSV as artifact ─────────────────────────────────────────
       - name: Upload CSV artifact
         uses: actions/upload-artifact@v4
         if: always()
@@ -90,8 +83,6 @@ jobs:
           path: vietnam_laptops.csv
           retention-days: 30
 
-      # ── 8. Commit & push CSV to repo (optional) ───────────────────────────
-      # Bỏ comment block này nếu muốn lưu CSV vào repo
        - name: Commit CSV to repository
          if: success()
          run: |
