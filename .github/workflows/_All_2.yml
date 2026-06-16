@@ -41,18 +41,19 @@ jobs:
         run: python -m playwright install chromium --with-deps
 
       - name: Run AnKhang crawler
-      run: python ankhang.py
-
+        run: python ankhang.py
+      
       - name: Commit results
         run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
 
-        git fetch origin main
-        git reset --soft origin/main
+          git fetch origin main
+          git reset --soft origin/main
 
-        git add output/ankhang.csv
-        git commit -m "Update AnKhang" || echo "No changes"
+          git add output/ankhang.csv
+          git commit -m "Update AnKhang" || echo "No changes"
 
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+
 
