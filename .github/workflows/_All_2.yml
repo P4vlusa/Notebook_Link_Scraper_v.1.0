@@ -46,24 +46,24 @@ jobs:
       - name: Create output directory
         run: mkdir -p output
 
-      - name: Run laptop crawler
+      - name: Run url crawler
         run: |
           DELAY="${{ github.event.inputs.delay || '1.5' }}"
           SITES="${{ github.event.inputs.sites }}"
 
           if [ -n "$SITES" ]; then
             echo "Running crawler for sites: $SITES"
-            python vietnam_laptop_crawler.py --sites $SITES --delay $DELAY --output output/all_v2.csv
+            python url_crawler.py --sites $SITES --delay $DELAY --output output/all_url.csv
           else
             echo "Running crawler for all sites"
-            python vietnam_laptop_crawler.py --delay $DELAY --output output/all_v2.csv
+            python url_crawler.py --delay $DELAY --output output/all_url.csv
           fi
 
       - name: Show result summary
         if: always()
         run: |
-          if [ -f output/all_v2.csv ]; then
-            COUNT=$(( $(wc -l < output/all_v2.csv) - 1 ))
+          if [ -f output/all_url.csv ]; then
+            COUNT=$(( $(wc -l < output/all_url.csv) - 1 ))
             echo "✅ Crawl completed: $COUNT products"
             echo "### 📊 Crawl Results" >> $GITHUB_STEP_SUMMARY
             echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
@@ -73,10 +73,10 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Sample (first 5 rows):**" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
-            head -6 output/all_v2.csv >> $GITHUB_STEP_SUMMARY
+            head -6 output/all_url.csv >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ output/all_v2.csv not found"
+            echo "❌ output/all_url.csv not found"
             exit 1
           fi
 
@@ -85,7 +85,7 @@ jobs:
         if: always()
         with:
           name: all_v2-${{ github.run_number }}
-          path: output/all_v2.csv
+          path: output/all_url.csv
           retention-days: 30
 
       - name: Commit and push CSV to repo
@@ -94,13 +94,13 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-          git add output/all_v2.csv
+          git add output/all_url.csv
 
           # Chỉ commit nếu có thay đổi
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            COUNT=$(( $(wc -l < output/all_v2.csv) - 1 ))
+            COUNT=$(( $(wc -l < output/all_url.csv) - 1 ))
             git commit -m "🤖 Auto-crawl $(date '+%Y-%m-%d'): ${COUNT} products"
             git push origin main
           fi
