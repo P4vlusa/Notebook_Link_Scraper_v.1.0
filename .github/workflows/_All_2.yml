@@ -1,11 +1,9 @@
 name: ALL Laptop Crawler
 
 on:
-  # Chạy tự động mỗi sáng thứ 5 lúc 02:00 UTC (09:00 giờ Việt Nam)
   schedule:
-    - cron: '0 2 * * 4'
+    - cron: '0 2 * * 4'   # Thứ Năm 09:00 giờ VN (02:00 UTC)
 
-  # Cho phép chạy thủ công từ GitHub Actions tab
   workflow_dispatch:
     inputs:
       sites:
@@ -20,11 +18,16 @@ on:
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 180  # Tối đa 3 giờ
+    timeout-minutes: 180
+
+    permissions:
+      contents: write   # Cần để push commit
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -40,20 +43,64 @@ jobs:
       - name: Install Playwright Chromium
         run: python -m playwright install chromium --with-deps
 
-      - name: Run AnKhang crawler
-        run: python vietnam_laptop_crawler.py
-      
-      - name: Commit results
+      - name: Create output directory
+        run: mkdir -p output
+
+      - name: Run laptop crawler
+        run: |
+          DELAY="${{ github.event.inputs.delay || '1.5' }}"
+          SITES="${{ github.event.inputs.sites }}"
+
+          if [ -n "$SITES" ]; then
+            echo "Running crawler for sites: $SITES"
+            python vietnam_laptop_crawler.py --sites $SITES --delay $DELAY --output output/all_v2.csv
+          else
+            echo "Running crawler for all sites"
+            python vietnam_laptop_crawler.py --delay $DELAY --output output/all_v2.csv
+          fi
+
+      - name: Show result summary
+        if: always()
+        run: |
+          if [ -f output/all_v2.csv ]; then
+            COUNT=$(( $(wc -l < output/all_v2.csv) - 1 ))
+            echo "✅ Crawl completed: $COUNT products"
+            echo "### 📊 Crawl Results" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total products | $COUNT |" >> $GITHUB_STEP_SUMMARY
+            echo "| Run date | $(date '+%Y-%m-%d %H:%M UTC') |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Sample (first 5 rows):**" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            head -6 output/all_v2.csv >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ output/all_v2.csv not found"
+            exit 1
+          fi
+
+      - name: Upload CSV artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: all_v2-${{ github.run_number }}
+          path: output/all_v2.csv
+          retention-days: 30
+
+      - name: Commit and push CSV to repo
+        if: success()
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-          git fetch origin main
-          git reset --soft origin/main
-
           git add output/all_v2.csv
-          git commit -m "Update vietnam_laptop_crawler" || echo "No changes"
 
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
-
-
+          # Chỉ commit nếu có thay đổi
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            COUNT=$(( $(wc -l < output/all_v2.csv) - 1 ))
+            git commit -m "🤖 Auto-crawl $(date '+%Y-%m-%d'): ${COUNT} products"
+            git push origin main
+          fi
